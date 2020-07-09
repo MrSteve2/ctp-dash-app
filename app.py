@@ -64,7 +64,7 @@ print(CTP_df2.state.unique())
 fig = px.scatter(CTP_df2, x="totalTestResultsIncrease_7day", y="positiveIncrease_7day", 
                  animation_frame="date", animation_group="state", hover_name="state",
                  color='state', text='state', height=800,
-                 range_x=[0,105000], range_y=[0,10000])
+                 range_x=[0,120000], range_y=[0,10000])
 
 fig2 = px.line(CTP_df2, x="totalTestResultsIncrease_7day", y="positiveIncrease_7day", 
                  hover_name="state",
