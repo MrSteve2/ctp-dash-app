@@ -98,14 +98,14 @@ app.layout = html.Div(style={'backgroundColor': colors['background']}, children=
     dcc.Dropdown(
         id='states-dropdown',
         options=state_options,
-        value=['AZ','NY'],
+        value=['AZ', 'NY', 'TX', 'CA'],
         multi=True
     ),
-    dcc.Dropdown(id='y-dropdown',
-                 options=[{'label': 'Daily Pos Increase', 'value': 'positiveIncrease'},
-                          {'label': 'Daily Pos Increase per million 7 day', 'value': 'positiveIncrease__permil_7day'},
-                          {'label': 'Daily Pos Increase 7 day', 'value': 'positiveIncrease_7day'}],
-                 value='positiveIncrease'),
+    # dcc.Dropdown(id='y-dropdown',
+    #              options=[{'label': 'Daily Pos Increase', 'value': 'positiveIncrease'},
+    #                       {'label': 'Daily Pos Increase per million 7 day', 'value': 'positiveIncrease__permil_7day'},
+    #                       {'label': 'Daily Pos Increase 7 day', 'value': 'positiveIncrease_7day'}],
+    #              value='positiveIncrease'),
 
     html.Div(id='states-container'),
     html.Div([
@@ -124,40 +124,39 @@ app.layout = html.Div(style={'backgroundColor': colors['background']}, children=
 
 @app.callback(
     dash.dependencies.Output('example-graph3', 'figure'),
-    [dash.dependencies.Input('states-dropdown', 'value'),
-     dash.dependencies.Input('y-dropdown', 'value')])
-def update_output(value, yDropdown):
+    [dash.dependencies.Input('states-dropdown', 'value')])
+def update_output(value):
     print(value)
-    print(yDropdown)
     df3 = df[df['state'].isin(value)]
     fig4 = px.line(df3, x="date_val", y='positiveIncrease', 
                  hover_name="state",
+                 title='Daily Values',
                  color='state', height=800,)
     return fig4
 
 @app.callback(
     dash.dependencies.Output('example-graph4', 'figure'),
-    [dash.dependencies.Input('states-dropdown', 'value'),
-     dash.dependencies.Input('y-dropdown', 'value')])
-def update_output(value, yDropdown):
+    [dash.dependencies.Input('states-dropdown', 'value')])
+def update_output(value):
     print(value)
-    print(yDropdown)
+    #print(yDropdown)
     df3 = df[df['state'].isin(value)]
     fig4 = px.line(df3, x="date_val", y='positiveIncrease_7day', 
                  hover_name="state",
+                 title='7 day average',
                  color='state', height=800,)
+    #fig4.update_layout(hovermode='x')
     return fig4
 
 @app.callback(
     dash.dependencies.Output('example-graph5', 'figure'),
-    [dash.dependencies.Input('states-dropdown', 'value'),
-     dash.dependencies.Input('y-dropdown', 'value')])
-def update_output(value, yDropdown):
+    [dash.dependencies.Input('states-dropdown', 'value')])
+def update_output(value):
     print(value)
-    print(yDropdown)
     df3 = df[df['state'].isin(value)]
     fig4 = px.line(df3, x="date_val", y='positiveIncrease__permil_7day', 
                  hover_name="state",
+                 title='7 day average - per million people',
                  color='state', height=800,)
     return fig4
 
