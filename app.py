@@ -21,51 +21,62 @@ colors = {
     'text': '#7FDBFF'
 }
 
-URL = 'https://covidtracking.com/api/states/daily'
-CTP_df = pd.read_json(URL, dtype={'date': 'int64'})
-CTP_df['date_val'] = pd.to_datetime(CTP_df['date'], format='%Y%m%d')
-CTP_df.sort_values(['state', 'date'], inplace=True)
 
-for item in ['deathIncrease', 'positiveIncrease', 'totalTestResultsIncrease', 'hospitalizedIncrease', 'hospitalizedCurrently']:
-    CTP_df[item + '_7day'] = CTP_df.groupby(
-        'state')[item].rolling(7).mean().reset_index(0, drop=True)
+def get_CTP_and_Census_data():
+    URL = 'https://covidtracking.com/api/states/daily'
+    CTP_df = pd.read_json(URL, dtype={'date': 'int64'})
+    CTP_df['date_val'] = pd.to_datetime(CTP_df['date'], format='%Y%m%d')
+    CTP_df.sort_values(['state', 'date'], inplace=True)
+
+    for item in ['deathIncrease', 'positiveIncrease', 'totalTestResultsIncrease', 'hospitalizedIncrease', 'hospitalizedCurrently']:
+        CTP_df[item + '_7day'] = CTP_df.groupby(
+            'state')[item].rolling(7).mean().reset_index(0, drop=True)
+
+    census_pop = pd.read_csv('https://data.cdc.gov/api/views/b2jx-uyck/rows.csv',
+                             names=['pop_year', 'state', 'state_name', 'TopicType', 'TopicDesc', 'DataSource', 'Data_Value_Type', 'Population', 'Gender', 'Age',
+                                    'GeoLocation', 'Source_File_USCB', 'Data_Pulled', 'LocationID', 'TopicTypeId', 'TopicId', 'MeasureId', 'StratificationID1',
+                                    'StratificationID2', 'SubMeasureID', 'DisplayOrder'],
+                             usecols=['pop_year', 'state', 'state_name',
+                                      'Population', 'Gender', 'Age', 'GeoLocation'],
+                             skiprows=1)
+    max_year = census_pop.pop_year.max()
+    census_pop_latest = census_pop[(census_pop.Gender == 'Total') &
+                                   (census_pop.Age == 'Total') &
+                                   (census_pop.pop_year == max_year)]
+
+    df = pd.merge(CTP_df, census_pop_latest[[
+        'pop_year', 'state', 'state_name', 'Population', 'GeoLocation']], on='state', how='outer')
+    cols_to_per_million = ['positive', 'negative', 'pending',
+                           'hospitalizedCurrently', 'hospitalizedCumulative', 'inIcuCurrently',
+                           'inIcuCumulative', 'onVentilatorCurrently', 'onVentilatorCumulative',
+                           'death', 'hospitalized',
+                           'totalTestsViral', 'positiveTestsViral', 'negativeTestsViral',
+                           'positiveCasesViral', 'positiveIncrease', 'negativeIncrease',
+                           'totalTestResults', 'totalTestResultsIncrease',
+                           'deathIncrease', 'hospitalizedIncrease',
+                           'totalTestResultsIncrease_7day', 'positiveIncrease_7day',
+                           'deathIncrease_7day', 'hospitalizedIncrease_7day', 'hospitalizedCurrently_7day']
+    for col in cols_to_per_million:
+        df[col + '_permil'] = df[col] / (df['Population'] / 1000000)
+    return df
 
 
-census_pop = pd.read_csv('https://data.cdc.gov/api/views/b2jx-uyck/rows.csv',
-                         names=['pop_year', 'state', 'state_name', 'TopicType', 'TopicDesc', 'DataSource', 'Data_Value_Type', 'Population', 'Gender', 'Age',
-                                'GeoLocation', 'Source_File_USCB', 'Data_Pulled', 'LocationID', 'TopicTypeId', 'TopicId', 'MeasureId', 'StratificationID1',
-                                'StratificationID2', 'SubMeasureID', 'DisplayOrder'],
-                         usecols=['pop_year', 'state', 'state_name',
-                                  'Population', 'Gender', 'Age', 'GeoLocation'],
-                         skiprows=1)
-max_year = census_pop.pop_year.max()
-census_pop_latest = census_pop[(census_pop.Gender == 'Total') &
-                               (census_pop.Age == 'Total') &
-                               (census_pop.pop_year == max_year)]
-
-df = pd.merge(CTP_df, census_pop_latest[[
-              'pop_year', 'state', 'state_name', 'Population', 'GeoLocation']], on='state', how='outer')
-cols_to_per_million = ['positive', 'negative', 'pending',
-                       'hospitalizedCurrently', 'hospitalizedCumulative', 'inIcuCurrently',
-                       'inIcuCumulative', 'onVentilatorCurrently', 'onVentilatorCumulative',
-                       'death', 'hospitalized',
-                       'totalTestsViral', 'positiveTestsViral', 'negativeTestsViral',
-                       'positiveCasesViral', 'positiveIncrease', 'negativeIncrease',
-                       'totalTestResults', 'totalTestResultsIncrease',
-                       'deathIncrease', 'hospitalizedIncrease',
-                       'totalTestResultsIncrease_7day', 'positiveIncrease_7day',
-                       'deathIncrease_7day', 'hospitalizedIncrease_7day', 'hospitalizedCurrently_7day']
-for col in cols_to_per_million:
-    df[col + '_permil'] = df[col] / (df['Population'] / 1000000)
+df = get_CTP_and_Census_data()
 
 # Setup Option values for each state in the dataset
-state_options = []
-for index, row in df[['state', 'state_name']].drop_duplicates().fillna('NaN').iterrows():
-    #print(row['state'], row['state_name'])
-    if (row['state_name'] != 'NaN'):
-        state_options.append(
-            {'label': row['state_name'], 'value': row['state']})
-print(state_options)
+
+
+def get_state_options():
+    state_options = []
+    for index, row in df[['state', 'state_name']].drop_duplicates().fillna('NaN').iterrows():
+        #print(row['state'], row['state_name'])
+        if (row['state_name'] != 'NaN'):
+            state_options.append(
+                {'label': row['state_name'], 'value': row['state']})
+    return state_options
+
+
+state_options = get_state_options()
 
 app.layout = html.Div(style={'backgroundColor': colors['background']}, children=[
     html.H1(children='The Covid Tracking Project - in Dash',
@@ -125,9 +136,9 @@ app.layout = html.Div(style={'backgroundColor': colors['background']}, children=
     dash.dependencies.Output('cases-7day', 'figure'),
     [dash.dependencies.Input('states-dropdown', 'value')])
 def update_output(value):
-    print(value)
     df3 = df[df['state'].isin(value)]
-    fig4 = px.line(df3, x="date_val", y='positiveIncrease_7day',
+    fig4 = px.line(df3,
+                   x="date_val", y='positiveIncrease_7day',
                    hover_name="state", title='New Cases (7 day average)', color='state')
     return fig4
 
