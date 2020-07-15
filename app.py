@@ -123,10 +123,14 @@ app.layout = html.Div([
             html.Div([
                 dcc.Graph(
                     id='states_permil2-1')
-            ]),
+            ], style={'height': '400'},),
             html.Div([
                 dcc.Graph(
                     id='states_permil2-2')
+            ]),
+            html.Div([
+                dcc.Graph(
+                    id='states_permil2-3')
             ]),
         ])),
         dcc.Tab(label='View 3', children=html.Div([
@@ -170,10 +174,23 @@ def update_output(value):
 def update_output(value):
     df3 = df[df['state'].isin(value)]
     fig4 = px.line(df3,
-                   x="date_val", y=['deathIncrease_7day_permil', 'positiveIncrease_7day_permil'],
+                   x="date_val", y=['hospitalizedCurrently_7day_permil', 'positiveIncrease_7day_permil'],
                    facet_col='state', facet_col_wrap=4,
                    width=800,
-                   hover_name="state", title='Deaths and Cases - per million', color='state')
+                   hover_name="state", title='Hosipitalized and Cases - per million', color='state')
+    return fig4
+
+
+@app.callback(
+    dash.dependencies.Output('states_permil2-3', 'figure'),
+    [dash.dependencies.Input('states-dropdown', 'value')])
+def update_output(value):
+    df3 = df[df['state'].isin(value)]
+    fig4 = px.line(df3,
+                   x="date_val", y=['hospitalizedCurrently_7day_permil', 'deathIncrease_7day_permil'],
+                   facet_col='state', facet_col_wrap=4,
+                   width=800,
+                   hover_name="state", title='Hosipitalized and Deaths - per million', color='state')
     return fig4
 
 
