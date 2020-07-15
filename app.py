@@ -24,18 +24,12 @@ colors = {
 URL = 'https://covidtracking.com/api/states/daily'
 CTP_df = pd.read_json(URL, dtype={'date': 'int64'})
 CTP_df['date_val'] = pd.to_datetime(CTP_df['date'], format='%Y%m%d')
-
 CTP_df.sort_values(['state', 'date'], inplace=True)
-CTP_df['positiveIncrease_7day'] = CTP_df.groupby(
-    'state')['positiveIncrease'].rolling(7).mean().reset_index(0, drop=True)
-CTP_df['totalTestResultsIncrease_7day'] = CTP_df.groupby(
-    'state')['totalTestResultsIncrease'].rolling(7).mean().reset_index(0, drop=True)
-CTP_df['deathIncrease_7day'] = CTP_df.groupby(
-    'state')['deathIncrease'].rolling(7).mean().reset_index(0, drop=True)
-CTP_df['hospitalizedIncrease_7day'] = CTP_df.groupby(
-    'state')['hospitalizedIncrease'].rolling(7).mean().reset_index(0, drop=True)
-CTP_df['hospitalizedCurrently_7day'] = CTP_df.groupby(
-    'state')['hospitalizedCurrently'].rolling(7).mean().reset_index(0, drop=True)
+
+for item in ['deathIncrease', 'positiveIncrease', 'totalTestResultsIncrease', 'hospitalizedIncrease', 'hospitalizedCurrently']:
+    CTP_df[item + '_7day'] = CTP_df.groupby(
+        'state')[item].rolling(7).mean().reset_index(0, drop=True)
+
 
 census_pop = pd.read_csv('https://data.cdc.gov/api/views/b2jx-uyck/rows.csv',
                          names=['pop_year', 'state', 'state_name', 'TopicType', 'TopicDesc', 'DataSource', 'Data_Value_Type', 'Population', 'Gender', 'Age',
