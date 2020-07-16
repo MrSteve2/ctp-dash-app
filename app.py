@@ -119,7 +119,7 @@ app.layout = html.Div([
 
 
             ])),
-        dcc.Tab(label='View 2', children=html.Div([
+        dcc.Tab(label='NY vs FL', children=html.Div([
             html.Div([
                 dcc.Graph(
                     id='states_permil2-1')
@@ -128,10 +128,10 @@ app.layout = html.Div([
                 dcc.Graph(
                     id='states_permil2-2')
             ]),
-            html.Div([
-                dcc.Graph(
-                    id='states_permil2-3')
-            ]),
+            # html.Div([
+            #     dcc.Graph(
+            #         id='states_permil2-3')
+            # ]),
         ])),
         dcc.Tab(label='View 3', children=html.Div([
             html.Div([
@@ -159,39 +159,85 @@ app.layout = html.Div([
     dash.dependencies.Output('states_permil2-1', 'figure'),
     [dash.dependencies.Input('states-dropdown', 'value')])
 def update_output(value):
-    df3 = df[df['state'].isin(value)]
-    fig4 = px.line(df3,
-                   x="date_val", y=['totalTestResultsIncrease_7day_permil', 'positiveIncrease_7day_permil'],
-                   facet_col='state', facet_col_wrap=4,
-                   width=800,
-                   hover_name="state", title='Tests and Cases - per million', color='state')
-    return fig4
+    # df3 = df[df['state'].isin(value)]
+    df3 = df[df['state'] == 'NY']
+
+    trace1 = go.Scatter(x=df3['date_val'],
+                        y=df3['totalTestResultsIncrease_7day_permil'],
+                        name='Tests',
+                        # mode='lines+markers',
+                        yaxis='y1')
+    trace3 = go.Scatter(x=df3['date_val'],
+                        y=df3['positiveIncrease_7day_permil'],
+                        name='Cases',
+                        yaxis='y2'
+                        )
+    data = [trace1, trace3]
+    layout = go.Layout(title='New York',
+                       yaxis=dict(title='Tests'),
+                       yaxis2=dict(title='Cases',
+                                   overlaying='y',
+                                   side='right'),
+                       annotations=[
+                           dict(
+                               x=pd.to_datetime(
+                                   '20200528', format='%Y%m%d'),
+                               y=31,
+                               xref="x",
+                               yref="y",
+                               text="Re-Open",
+                               showarrow=True,
+                               # arrowhead=7,
+                               ax=0,
+                               ay=-200
+                           )])
+    return go.Figure(data=data, layout=layout)
+
+    # fig4 = px.line(df3,
+    #                x="date_val", y=['totalTestResultsIncrease_7day_permil', 'positiveIncresae_7day_permil'],
+    #                facet_col='state', facet_col_wrap=4,
+    #                width=800,
+    #                hover_name="state", title='Tests and Cases - per million', color='state')
+    # return fig4
 
 
-@app.callback(
+@ app.callback(
     dash.dependencies.Output('states_permil2-2', 'figure'),
     [dash.dependencies.Input('states-dropdown', 'value')])
 def update_output(value):
-    df3 = df[df['state'].isin(value)]
-    fig4 = px.line(df3,
-                   x="date_val", y=['hospitalizedCurrently_7day_permil', 'positiveIncrease_7day_permil'],
-                   facet_col='state', facet_col_wrap=4,
-                   width=800,
-                   hover_name="state", title='Hosipitalized and Cases - per million', color='state')
-    return fig4
+    df3 = df[df['state'] == 'FL']
 
-
-@app.callback(
-    dash.dependencies.Output('states_permil2-3', 'figure'),
-    [dash.dependencies.Input('states-dropdown', 'value')])
-def update_output(value):
-    df3 = df[df['state'].isin(value)]
-    fig4 = px.line(df3,
-                   x="date_val", y=['hospitalizedCurrently_7day_permil', 'deathIncrease_7day_permil'],
-                   facet_col='state', facet_col_wrap=4,
-                   width=800,
-                   hover_name="state", title='Hosipitalized and Deaths - per million', color='state')
-    return fig4
+    trace1 = go.Scatter(x=df3['date_val'],
+                        y=df3['totalTestResultsIncrease_7day_permil'],
+                        name='Tests',
+                        # mode='lines+markers',
+                        yaxis='y1')
+    trace3 = go.Scatter(x=df3['date_val'],
+                        y=df3['positiveIncrease_7day_permil'],
+                        name='Cases',
+                        yaxis='y2'
+                        )
+    data = [trace1, trace3]
+    layout = go.Layout(title='Florida',
+                       yaxis=dict(title='Tests'),
+                       yaxis2=dict(title='Cases',
+                                   overlaying='y',
+                                   side='right'),
+                       annotations=[
+                           dict(
+                               x=pd.to_datetime(
+                                   '20200504', format='%Y%m%d'),
+                               y=31,
+                               xref="x",
+                               yref="y",
+                               text="Re-Open",
+                               showarrow=True,
+                               # arrowhead=7,
+                               ax=0,
+                               ay=-200
+                           )
+                       ])
+    return go.Figure(data=data, layout=layout)
 
 
 @app.callback(
