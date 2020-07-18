@@ -119,7 +119,20 @@ app.layout = html.Div([
 
 
             ])),
-        dcc.Tab(id='tab2', label='Tests vs Cases'),
+        dcc.Tab(label='NY vs FL', children=html.Div([
+            html.Div([
+                dcc.Graph(
+                    id='states_permil2-1')
+            ], style={'height': '400'},),
+            html.Div([
+                dcc.Graph(
+                    id='states_permil2-2')
+            ]),
+            # html.Div([
+            #     dcc.Graph(
+            #         id='states_permil2-3')
+            # ]),
+        ])),
         dcc.Tab(label='View 3', children=html.Div([
             html.Div([
                 dcc.Graph(
@@ -141,25 +154,27 @@ app.layout = html.Div([
     ])
 ])
 
-print(len(app.layout))
-
-# Done - Specify multiple Outputs in callback - https://community.plotly.com/t/multiple-outputs-in-dash-now-available/19437
+# ToDo - Specify multiple Outputs in callback - https://community.plotly.com/t/multiple-outputs-in-dash-now-available/19437
 
 
-def getStateFig(state, state_name, open_date):
-    df1 = df[df['state'] == state]
+@app.callback(
+    dash.dependencies.Output('states_permil2-1', 'figure'),
+    [dash.dependencies.Input('states-dropdown', 'value')])
+def update_output(value):
+    # df3 = df[df['state'].isin(value)]
+    df3 = df[df['state'] == 'NY']
 
-    trace11 = go.Scatter(x=df1['date_val'],
-                         y=df1['totalTestResultsIncrease_7day_permil'],
-                         name='Tests',
-                         yaxis='y1')
-    trace12 = go.Scatter(x=df1['date_val'],
-                         y=df1['positiveIncrease_7day_permil'],
-                         name='Cases',
-                         yaxis='y2'
-                         )
-    data = [trace11, trace12]
-    layout = go.Layout(title=state_name,
+    trace1 = go.Scatter(x=df3['date_val'],
+                        y=df3['totalTestResultsIncrease_7day_permil'],
+                        name='Tests',
+                        yaxis='y1')
+    trace3 = go.Scatter(x=df3['date_val'],
+                        y=df3['positiveIncrease_7day_permil'],
+                        name='Cases',
+                        yaxis='y2'
+                        )
+    data = [trace1, trace3]
+    layout = go.Layout(title='New York',
                        yaxis=dict(title='Tests',
                                   range=[0, 3600], dtick=300, autorange=False),
                        yaxis2=dict(title='Cases',
@@ -169,7 +184,7 @@ def getStateFig(state, state_name, open_date):
                        annotations=[
                            dict(
                                x=pd.to_datetime(
-                                   open_date, format='%Y%m%d'),
+                                   '20200528', format='%Y%m%d'),
                                y=31,
                                xref="x",
                                yref="y",
@@ -179,30 +194,64 @@ def getStateFig(state, state_name, open_date):
                                ay=-200
                            )])
     return go.Figure(data=data, layout=layout)
+    # fig.update_xaxes(range=[1.5, 4.5])
+
+    # fig4 = px.line(df3,
+    #                x="date_val", y=['totalTestResultsIncrease_7day_permil', 'positiveIncresae_7day_permil'],
+    #                facet_col='state', facet_col_wrap=4,
+    #                width=800,
+    #                hover_name="state", title='Tests and Cases - per million', color='state')
+    # return fig4
 
 
-@app.callback(
-    [Output('tab2', 'children')],
-    [Input('states-dropdown', 'value')])
-def update_output(value):
-    graphs = []
-    for item in value:
-        g1 = html.Div([
-            dcc.Graph(
-                id='states_permil2-1',
-                figure=getStateFig(item, item, '20200528'))
-        ], style={'height': '400'},)
-        graphs.append(g1)
-    return [graphs]
-
-
-def roundUp(n):  # ToDo - use roundUP to check for max axis values
+def roundUp(n):
     '''Round up to set axis upper limit'''
     n1 = 10**(len(str(int(n))) - 2)
     return int(n / n1 + 1) * n1
 
 
 @ app.callback(
+    dash.dependencies.Output('states_permil2-2', 'figure'),
+    [dash.dependencies.Input('states-dropdown', 'value')])
+def update_output(value):
+    df3 = df[df['state'] == 'FL']
+    maxval = df3['totalTestResultsIncrease_7day_permil'].max()
+    trace1 = go.Scatter(x=df3['date_val'],
+                        y=df3['totalTestResultsIncrease_7day_permil'],
+                        name='Tests',
+                        # mode='lines+markers',
+                        yaxis='y1')
+    trace3 = go.Scatter(x=df3['date_val'],
+                        y=df3['positiveIncrease_7day_permil'],
+                        name='Cases',
+                        yaxis='y2'
+                        )
+    data = [trace1, trace3]
+    layout = go.Layout(title='Florida',
+                       yaxis=dict(title='Tests',
+                                  range=[0, roundUp(maxval)], dtick=300, autorange=False),
+                       yaxis2=dict(title='Cases',
+                                   overlaying='y',
+                                   side='right',
+                                   range=[0, 600], dtick=50, autorange=False),
+                       annotations=[
+                           dict(
+                               x=pd.to_datetime(
+                                   '20200504', format='%Y%m%d'),
+                               y=31,
+                               xref="x",
+                               yref="y",
+                               text="Re-Open",
+                               showarrow=True,
+                               # arrowhead=7,
+                               ax=0,
+                               ay=-200
+                           )
+                       ])
+    return go.Figure(data=data, layout=layout)
+
+
+@app.callback(
     dash.dependencies.Output('states_permil3-1', 'figure'),
     [dash.dependencies.Input('states-dropdown', 'value')])
 def update_output(value):
@@ -215,7 +264,7 @@ def update_output(value):
     return fig4
 
 
-@ app.callback(
+@app.callback(
     dash.dependencies.Output('states_permil3-2', 'figure'),
     [dash.dependencies.Input('states-dropdown', 'value')])
 def update_output(value):
@@ -228,7 +277,7 @@ def update_output(value):
     return fig4
 
 
-@ app.callback(
+@app.callback(
     dash.dependencies.Output('states_permil3-3', 'figure'),
     [dash.dependencies.Input('states-dropdown', 'value')])
 def update_output(value):
@@ -241,7 +290,7 @@ def update_output(value):
     return fig4
 
 
-@ app.callback(
+@app.callback(
     dash.dependencies.Output('states_permil3-4', 'figure'),
     [dash.dependencies.Input('states-dropdown', 'value')])
 def update_output(value):
