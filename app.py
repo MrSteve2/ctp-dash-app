@@ -12,6 +12,13 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 server = app.server
 
+
+state_rules = {'NY': {'ReOpening': '20200528'},
+               'NJ': {'Stay Home': '20200321', 'Stay Home Lifted': '20200609'},
+               'FL': {'Stay Home': '20200403', 'Stay Home Lifted': '20200504'},
+               'AZ': {'Stay Home': '20200331', 'Stay Home Lifted': '20200430'},
+               'TX': {'Stay Home': '20200402', 'Stay Home Lifted': '20200430'},
+               'CA': {}}
 colors = {
     'background': '#111111',
     'text': '#7FDBFF'
@@ -159,6 +166,23 @@ def getStateFig(state, state_name, open_date):
                          yaxis='y2'
                          )
     data = [trace11, trace12]
+    state_annotations = []
+    for item in state_rules[state]:
+        print(state, item, state_rules[state][item])
+        anno = dict(
+            x=pd.to_datetime(
+                state_rules[state][item], format='%Y%m%d'),
+            y=31,
+            xref="x",
+            yref="y",
+            text=item,
+            showarrow=True,
+            ax=0,
+            ay=-200
+        )
+        state_annotations.append(anno)
+    print(state_annotations)
+
     layout = go.Layout(title=state_name,
                        yaxis=dict(title='Tests',
                                   range=[0, 3600], dtick=300, autorange=False),
@@ -166,22 +190,11 @@ def getStateFig(state, state_name, open_date):
                                    overlaying='y',
                                    side='right',
                                    range=[0, 600], dtick=50, autorange=False),
-                       annotations=[
-                           dict(
-                               x=pd.to_datetime(
-                                   open_date, format='%Y%m%d'),
-                               y=31,
-                               xref="x",
-                               yref="y",
-                               text="Re-Open",
-                               showarrow=True,
-                               ax=0,
-                               ay=-200
-                           )])
+                       annotations=state_annotations)
     return go.Figure(data=data, layout=layout)
 
 
-@app.callback(
+@ app.callback(
     [Output('tab2', 'children')],
     [Input('states-dropdown', 'value')])
 def update_output(value):
