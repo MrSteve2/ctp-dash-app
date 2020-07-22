@@ -127,6 +127,7 @@ app.layout = html.Div([
 
             ])),
         dcc.Tab(id='tab2', label='Tests vs Cases'),
+        dcc.Tab(id='tab4', label='Cases vs Deaths'),
         dcc.Tab(label='View 3', children=html.Div([
             html.Div([
                 dcc.Graph(
@@ -153,16 +154,16 @@ print(len(app.layout))
 # Done - Specify multiple Outputs in callback - https://community.plotly.com/t/multiple-outputs-in-dash-now-available/19437
 
 
-def getStateFig(state, state_name, open_date):
+def getStateFig(state, state_name, measure1, measure1_name, measure2, measure2_name):
     df1 = df[df['state'] == state]
 
     trace11 = go.Scatter(x=df1['date_val'],
-                         y=df1['totalTestResultsIncrease_7day_permil'],
-                         name='Tests',
+                         y=df1[measure1],
+                         name=measure1_name,
                          yaxis='y1')
     trace12 = go.Scatter(x=df1['date_val'],
-                         y=df1['positiveIncrease_7day_permil'],
-                         name='Cases',
+                         y=df1[measure2],
+                         name=measure2_name,
                          yaxis='y2'
                          )
     data = [trace11, trace12]
@@ -178,23 +179,27 @@ def getStateFig(state, state_name, open_date):
             text=item,
             showarrow=True,
             ax=0,
-            ay=-200
+            ay=-300
         )
         state_annotations.append(anno)
     print(state_annotations)
+    max1 = roundUp(df1[measure1].max())
+    max2 = roundUp(df1[measure2].max())
+    print("Hi1", measure1_name, measure1, max1, df1[measure1].max())
+    print("Hi2", measure2_name, measure2, max2)
 
     layout = go.Layout(title=state_name,
-                       yaxis=dict(title='Tests',
-                                  range=[0, 3600], dtick=300, autorange=False),
-                       yaxis2=dict(title='Cases',
+                       yaxis=dict(title=measure1_name,
+                                  range=[0, max1], dtick=300, autorange=False),
+                       yaxis2=dict(title=measure2_name,
                                    overlaying='y',
                                    side='right',
-                                   range=[0, 600], dtick=50, autorange=False),
+                                   range=[0, max2], dtick=50, autorange=False),
                        annotations=state_annotations)
     return go.Figure(data=data, layout=layout)
 
 
-@ app.callback(
+@app.callback(
     [Output('tab2', 'children')],
     [Input('states-dropdown', 'value')])
 def update_output(value):
@@ -203,7 +208,26 @@ def update_output(value):
         g1 = html.Div([
             dcc.Graph(
                 id='states_permil2-1',
-                figure=getStateFig(item, item, '20200528'))
+                figure=getStateFig(item, item,
+                                   'totalTestResultsIncrease_7day_permil', 'Tests (7day per mil)',
+                                   'positiveIncrease_7day_permil', 'Cases (7day per mil'))
+        ], style={'height': '400'},)
+        graphs.append(g1)
+    return [graphs]
+
+
+@app.callback(
+    [Output('tab4', 'children')],
+    [Input('states-dropdown', 'value')])
+def update_output(value):
+    graphs = []
+    for item in value:
+        g1 = html.Div([
+            dcc.Graph(
+                id='states_permil2-1',
+                figure=getStateFig(item, item,
+                                   'deathIncrease_7day_permil', 'Deaths (7day per mil)',
+                                   'positiveIncrease_7day_permil', 'Cases (7day per mil)'))
         ], style={'height': '400'},)
         graphs.append(g1)
     return [graphs]
@@ -211,7 +235,9 @@ def update_output(value):
 
 def roundUp(n):  # ToDo - use roundUP to check for max axis values
     '''Round up to set axis upper limit'''
-    n1 = 10**(len(str(int(n))) - 2)
+    n1 = 10 ** (len(str(int(n))) - 2)
+    if n < 10:
+        return (int(n+0.99))
     return int(n / n1 + 1) * n1
 
 
